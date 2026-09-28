@@ -38,3 +38,12 @@ bash scripts/build.sh
 | النشر في Google Play | `targetSdkVersion=34` من APK الأصلي، لذلك يحتاج إعادة بناء من المصدر الأصلي بإصدار SDK مدعوم واختبارات جهاز |
 
 لا ينبغي تقديم APK المعاد بناؤه على أنه إصدار إنتاجي شامل قبل استعادة مشروع Gradle الأصلي، إضافة الدعم الأصلي للمكتبات، واختبارات جهاز وأمان وظيفية.
+
+
+## Java and native-package status
+
+The current APK rebuild contains the Chaquopy/Python runtime, but it does not contain a verified compiler pipeline for arbitrary Java source files. Android does not provide `javac` as a general-purpose runtime. Java-source execution therefore requires a separate compiler/DEX or precompiled-plugin design and real-device testing; this repository does not claim that capability yet.
+
+Likewise, native Python packages such as RDKit cannot be made production-ready by ordinary `pip install`. They require Android-compatible native builds and dependencies for the supported ABIs. The rebuild preserves the original Chaquopy runtime but does not claim RDKit support unless it is separately bundled and device-tested.
+
+CI now performs shell/Python validation before rebuilding, requires the complete 92-part APK payload and its expected SHA-256, aligns the resulting APK, verifies the signature and ZIP container, and uploads the signed artifact. Without release-signing secrets, CI uses an ephemeral test key whose certificate subject identifies `Abdulsalam Salih Hasan / PyNexus`.
