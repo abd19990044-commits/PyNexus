@@ -1,20 +1,28 @@
-name: Build and inspect APK
+name: Build and verify PyNexus APK
 on:
   push:
     branches: [main]
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pynexus-build-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   apk:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Android APK tools
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Android build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y apktool aapt zipalign apksigner default-jdk-headless
-      - name: Decode, patch, rebuild, align, sign, and verify
+          sudo apt-get install -y apktool aapt aapt2 zipalign apksigner default-jdk-headless python3
+      - name: Validate repository scripts
+        run: |
+          python3 -m py_compile scripts/reassemble.py scripts/normalize_resources.py
+          bash -n scripts/build.sh
+      - name: Build, align, sign and verify
         env:
           PYNEXUS_KEYSTORE_B64: ${{ secrets.PYNEXUS_KEYSTORE_B64 }}
           PYNEXUS_STORE_PASSWORD: ${{ secrets.PYNEXUS_STORE_PASSWORD }}
