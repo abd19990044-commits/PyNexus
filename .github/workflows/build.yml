@@ -1,0 +1,28 @@
+name: Build and inspect APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Android APK tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apktool aapt zipalign apksigner default-jdk-headless
+      - name: Decode, patch, rebuild, align, sign, and verify
+        env:
+          PYNEXUS_KEYSTORE_B64: ${{ secrets.PYNEXUS_KEYSTORE_B64 }}
+          PYNEXUS_STORE_PASSWORD: ${{ secrets.PYNEXUS_STORE_PASSWORD }}
+        run: bash scripts/build.sh
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PyNexus-signed-apk
+          path: build/PyNexus-signed.apk
+          if-no-files-found: error
+          retention-days: 30
